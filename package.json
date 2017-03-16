@@ -1,0 +1,13 @@
+{
+  "name": "starschema-minicrm-integrations",
+  "version": "1.0.0",
+  "description": "Starschema MiniCRM Integrations",
+  "main": "index.js",
+  "repository": "https://github.com/starschema/starschema-minicrm-integrations",
+  "author": "Tamas Foldi <tfoldi@starschema.net>",
+  "license": "BSD",
+  "dependencies": {
+    "googleapis": "^18.0.0",
+    "install": "^0.8.7"
+  }
+}
