@@ -6,22 +6,19 @@ fp = require('lodash/fp')
 jwtClient = new (google.auth.JWT)(key.client_email, null, key.private_key, 'https://www.googleapis.com/auth/tasks', 'tfoldi@starschema.net')
 
 jwtClient.authorize (err, tokens) ->
-  if err
-    console.log err
+  console.log err if err
   
 service = google.tasks('v1')
 google.options {auth: jwtClient}
 
 withFirstTasklist = (callback) ->
   service.tasklists.list {}, (err, response) ->
-    if err
-      console.log 'The API returned an error: ' + err
-      return
+    return console.log 'The API returned an error: ' + err if err
     callback(err, fp.first response.items )
 
 
 createTask = (tasklist,task,callback) ->
-#  return console.log "create task => #{task.title}"
+  console.log "create task => #{task.title}"
   service.tasks.insert {tasklist: tasklist, resource: task}, (err, response) ->
     callback( [err, response] )
 
@@ -32,25 +29,39 @@ googleTaskFromMiniCrmTodo = (project, todo) ->
     notes: todo.Url
   }
 
+googleTaskClose = (todolist, todo) ->
+  service.tasks.patch {tasklist: tasklist, todo: todo, resource: {status: 'completed' }}, (err, response) ->
+    callback( [err, response] )
+
 openOnly = fp.filter {Status: 'Open'}
 
 forUser = (user) -> fp.filter ['UserId', user]
 
-filterRelevantTodos = (todo,user) ->
+untilTomorrow = fp.filter (todo) -> Date.parse(todo.Deadline) < (Date.now() + 60 * 60 * 24 * 1000)
+
+# relevant:
+filterRelevantTodos = (todo,user,gtodos) ->
   fp.flow([
-    openOnly,
+    #openOnly,
+    untilTomorrow,
     forUser(user)
   ])(todo)
 
 exports.syncGoogleTasks = (req, res) ->
   withFirstTasklist (err,tasklist) ->
-    console.log(tasklist)
     service.tasks.list {tasklist: tasklist.id}, (err, res) ->
-      console.log "Items:" , res.items
       exports.getAllCrmTodo "45477", (project,todos) ->
-        for todo in filterRelevantTodos(todos,45477)
-          console.log project, todo
-          createTask tasklist.id, googleTaskFromMiniCrmTodo(project,todo), (resp) ->
-            console.log resp
+        filterRelevantTodos(todos,45477).forEach (todo) ->
+          gtodo = fp.find {notes: todo.Url}, res.items
+          console.log project, todo, gtodo
+          if gtodo == undefined and todo.Status == 'Open'
+            createTask tasklist.id, googleTaskFromMiniCrmTodo(project,todo), (resp) ->
+              console.log "Added google task", resp
+          else if gtodo?.status == 'completed' and todo.Status == 'Open'
+            # Close in MiniCRM
+            console.log 1
+          else if todo.Status == 'Closed' and gtodo?.status == 'needsAction'
+            googleTaskClose tasklist.id, todo.id, (resp) ->
+              console.log resp
 
   res?.status(200).end()
