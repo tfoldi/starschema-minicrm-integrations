@@ -29,8 +29,8 @@ googleTaskFromMiniCrmTodo = (project, todo) ->
     notes: todo.Url
   }
 
-googleTaskClose = (todolist, todo) ->
-  service.tasks.patch {tasklist: tasklist, todo: todo, resource: {status: 'completed' }}, (err, response) ->
+googleTaskClose = (tasklist, task, callback) ->
+  service.tasks.patch {tasklist: tasklist, task: task, resource: {status: 'completed' }}, (err, response) ->
     callback( [err, response] )
 
 openOnly = fp.filter {Status: 'Open'}
@@ -59,9 +59,9 @@ exports.syncGoogleTasks = (req, res) ->
               console.log "Added google task", resp
           else if gtodo?.status == 'completed' and todo.Status == 'Open'
             # Close in MiniCRM
-            console.log 1
+            exports.makeTodoComplete todo.Id
           else if todo.Status == 'Closed' and gtodo?.status == 'needsAction'
-            googleTaskClose tasklist.id, todo.id, (resp) ->
+            googleTaskClose tasklist.id, gtodo.id, (resp) ->
               console.log resp
 
   res?.status(200).end()

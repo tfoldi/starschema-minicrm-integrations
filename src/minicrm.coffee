@@ -16,6 +16,11 @@ get  = send_request request.get
 post = send_request request.post
 
 
+exports.makeTodoComplete = (todo) ->
+  request.put "https://r3.minicrm.hu/Api/R3/ToDo/#{todo}", fp.merge(crmauth, {data: '{"Status": "Closed"}'}), (err,response,body ) ->
+      console.log "Todo #{todo} closed", err, response, body
+    
+
 exports.getAllCrmTodo = (userid,callback) ->
   get projects_url, (body) ->
     Object.keys( body.Results ).forEach (project_id) ->
