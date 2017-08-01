@@ -2,7 +2,7 @@ request = require 'request'
 fp = require 'lodash/fp'
 crmauth = require './minicrm-secret.json'
 
-projects_url = "https://r3.minicrm.hu/Api/R3/Project\?Deleted\=0"
+projects_url = "https://r3.minicrm.hu/Api/R3/Project\?Deleted\=0&UpdatedSince=2017-#{new Date().getMonth()}-01+12:00:00"
 todolist_url = "https://r3.minicrm.hu/Api/R3/ToDoList/"
 
 
@@ -17,7 +17,7 @@ post = send_request request.post
 
 
 exports.makeTodoComplete = (todo) ->
-  request.put "https://r3.minicrm.hu/Api/R3/ToDo/#{todo}", fp.merge(crmauth, {data: '{"Status": "Closed"}'}), (err,response,body ) ->
+  request.put "https://r3.minicrm.hu/Api/R3/ToDo/#{todo}", fp.merge(crmauth, {json: {"Status": "Closed"}}), (err,response,body ) ->
       console.log "Todo #{todo} closed", err, response, body
     
 

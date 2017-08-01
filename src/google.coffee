@@ -63,5 +63,6 @@ exports.syncGoogleTasks = (req, res) ->
           else if todo.Status == 'Closed' and gtodo?.status == 'needsAction'
             googleTaskClose tasklist.id, gtodo.id, (resp) ->
               console.log resp
-
+    service.tasks.clear {tasklist: tasklist.id}, (err, res) ->
+      console.log "Tasklist #{tasklist.name} has been cleared"
   res?.status(200).end()
